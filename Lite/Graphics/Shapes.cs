@@ -287,7 +287,7 @@ namespace Lite.Graphics
 
         public void FillPolygon(Vector2[] vertex, Color color)
         {
-            int[] index = Utils.Triangulate(vertex);
+            int[] index = LiteUtil.Triangulate(vertex);
 
             this.FillPolygon(vertex, index, color);
         }
@@ -318,7 +318,7 @@ namespace Lite.Graphics
 
             float e1x = bx - ax;
             float e1y = by - ay;
-            Utils.Normalize(ref e1x, ref e1y);
+            LiteUtil.Normalize(ref e1x, ref e1y);
             e1x *= halfthickness;
             e1y *= halfthickness;
 
