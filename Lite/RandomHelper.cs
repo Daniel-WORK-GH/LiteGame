@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace Lite
 {
@@ -24,6 +27,15 @@ namespace Lite
         {
             if (min > max) throw new ArgumentException("Min can't be bigger then Max");
             return random.NextSingle() * (max - min) + min;
+        }
+
+        public static Color RandomColor()
+        {
+            return new Color(
+                RandomInteger(0, 256),
+                RandomInteger(0, 256),
+                RandomInteger(0, 256)
+                );
         }
     }
 }
