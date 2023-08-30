@@ -20,6 +20,11 @@ namespace Lite
             currentKeystate = Keyboard.GetState();
         }
 
+        public static bool IsPressed(Keys k)
+        {
+            return currentKeystate.IsKeyDown(k);
+        }
+
         public static bool IsClicked(Keys k)
         {
             return previousKeystate.IsKeyUp(k) && currentKeystate.IsKeyDown(k);
