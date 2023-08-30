@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework;
 
 namespace Lite
 {
-    internal class Utils
+    internal static class Utils
     {
         public static void Normalize(ref float x, ref float y)
         {
