@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Lite
 {
-    internal readonly struct LiteVector
+    public readonly struct LiteVector
     {
         public readonly float X;
         public readonly float Y;
