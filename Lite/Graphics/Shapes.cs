@@ -10,6 +10,8 @@ namespace Lite.Graphics
 
         private BasicEffect effect;
 
+        private Camera camera;
+
         private VertexPositionColor[] vertices;
         private int[] indices;
 
@@ -78,21 +80,30 @@ namespace Lite.Graphics
             this.shapeCount++;
         }
 
-        public void Begin()
+        public void Begin(Camera camera = null)
         {
             if (this.started)
             {
                 throw new Exception("Begin() called before End().");
             }
 
-            this.effect.Projection = Matrix.CreateOrthographicOffCenter(
-                left: 0f,
-                this.game.GraphicsDevice.Viewport.Width,
-                this.game.GraphicsDevice.Viewport.Height,
-                top: 0f,
-                zNearPlane: 0f,
-                zFarPlane: 1f);
- 
+            if(camera != null)
+            {
+                this.effect.View = camera.View;
+                this.effect.Projection = camera.Projection;
+            }
+            else 
+            { 
+                this.effect.Projection = Matrix.CreateOrthographicOffCenter(
+                    left: 0f,
+                    this.game.GraphicsDevice.Viewport.Width,
+                    this.game.GraphicsDevice.Viewport.Height,
+                    top: 0f,
+                    zNearPlane: 0f,
+                    zFarPlane: 1f);
+            }
+
+            this.camera = camera;
             this.started = true;
         }
 
@@ -220,6 +231,11 @@ namespace Lite.Graphics
             }
         }
 
+        public void FillCircle(Vector2 position, float radius, int points, Color color)
+        {
+            FillCircle(position.X, position.Y, radius, points, color);
+        }
+
         public void DrawCircle(float centerx, float centery, float radius, int points, float thickness, Color color)
         {
             const int MinPoints = 3;
@@ -292,6 +308,11 @@ namespace Lite.Graphics
             const int LineVertices = 4;
             const int LineIndices = 6;
             this.EnsureAddShape(LineVertices, LineIndices);
+
+            if(camera != null)
+            {
+                thickness *= 1 / camera.Scale;
+            }
 
             float halfthickness = thickness / 2f;
 
