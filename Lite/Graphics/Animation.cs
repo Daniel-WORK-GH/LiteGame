@@ -11,25 +11,38 @@ namespace Lite.Graphics
 {
     public struct Animation
     {
+        // Current frame index on a [numberOfFramesX] x [numberOfFramesY] grid
         private int frameX;
         private int frameY;
+
+        // Number of rows and cols in the animation
         private readonly int numberOfFramesX;
         private readonly int numberOfFramesY;
+
+        // Number of total frames in the animation
         private readonly int numberOfFrames => numberOfFramesX + numberOfFramesY;
 
+        // Animation (x, y) off set on a tile set
         private int animationOffsetX;
         private int animationOffsetY;
-
+        
+        // Single animation frame size
         private readonly int frameWidth;
         private readonly int frameHeight;
 
+        // Animation speed
         private readonly float frameElapsedTime;
         private float currentElapsedTime;
 
+        // Loop the animation or end when currentFrame == numberOfFrames
         private bool isLooping;
 
+        // Index of the current frame of the animation
         private int currentFrame;
 
+        /// <summary>
+        /// Index of the current frame of the animation
+        /// </summary>
         public int CurrentFrame
         {
             get { return this.currentFrame; }
@@ -51,12 +64,27 @@ namespace Lite.Graphics
             }
         }
 
+        /// <summary>
+        /// Source rectangle that represent the current frame on a tile set
+        /// </summary>
         public Rectangle Bounds => new Rectangle(
             this.animationOffsetX + this.frameWidth * this.frameX,
             this.animationOffsetY + this.frameHeight * this.frameY,
             this.frameWidth,
             this.frameHeight);
 
+        /// <summary>
+        /// An object that allows playing a 2D animation
+        /// </summary>
+        /// <param name="frameWidth">Single frame width</param>
+        /// <param name="frameHeight">Single frame height</param>
+        /// <param name="numberOfFramesX">Number of animation coloumns</param>
+        /// <param name="numberOfFramesY">Number of animation rows</param>
+        /// <param name="frameElapsedTime">Time for each frame in milliseconds</param>
+        /// <param name="isLooping">[True] if return to frame [0] on animation end. [False] if stay of the last frame.</param>
+        /// <param name="animationOffsetX">X offset on the tileset</param>
+        /// <param name="animationOffsetY">Y offset on the tileset</param>
+        /// <param name="startFrame">The index of the first frame of the animation</param>
         public Animation(int frameWidth, int frameHeight, int numberOfFramesX, int numberOfFramesY,
             float frameElapsedTime, bool isLooping = true, int animationOffsetX = 0, int animationOffsetY = 0, int startFrame = 0)
         {
@@ -86,6 +114,9 @@ namespace Lite.Graphics
             this.CurrentFrame = startFrame;
         }
 
+        /// <summary>
+        /// Play the animation
+        /// </summary>
         public void Update(GameTime gameTime)
         {
             this.currentElapsedTime += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
