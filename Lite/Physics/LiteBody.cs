@@ -98,6 +98,12 @@ namespace Lite.Physics
             return this.transformedVertices;
         }
 
+        public void Step(float time)
+        {
+            this.position += this.linearVelocity * time;
+            this.rotation += this.rotationalVelocity * time;
+        }
+
         public void Move(LiteVector amount)
         {
             this.position += amount;
