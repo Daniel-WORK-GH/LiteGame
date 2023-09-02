@@ -8,7 +8,119 @@ namespace Lite.Physics
 {
     public static class Collisions
     {
-        public static bool IntersectPolygons(LiteVector[] verticesA, LiteVector[] verticesB, out LiteVector normal, out float depth)
+        public static bool IntersectCirclePolygon(LiteVector circleCenter, float circleRadius, LiteVector[] vertices,
+            out LiteVector normal, out float depth)
+        {
+            normal = LiteVector.Zero;
+            depth = float.MaxValue;
+
+            LiteVector axis = LiteVector.Zero;
+            float asixDepth = 0;
+            float minA, minB, maxA, maxB;
+
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                LiteVector va = vertices[i];
+                LiteVector vb = vertices[(i + 1) % vertices.Length];
+
+                LiteVector edge = vb - va;
+                axis = new LiteVector(edge.Y, -edge.X);
+                axis = axis.Normalize();
+
+                Collisions.ProjectVertices(vertices, axis, out minA, out maxA);
+                Collisions.ProjectCircle(circleCenter, circleRadius, axis, out minB, out maxB);
+
+                if (minA >= maxB || minB >= maxA)
+                {
+                    return false;
+                }
+
+                asixDepth = MathF.Min(maxB - minA, maxA - minB);
+
+                if (asixDepth < depth)
+                {
+                    depth = asixDepth;
+                    normal = axis;
+                }
+            }
+
+            int cpIndex = Collisions.FindClosestPointOnPolygon(circleCenter, vertices);
+            LiteVector cp = vertices[cpIndex];
+
+            axis = cp - circleCenter;
+
+            Collisions.ProjectVertices(vertices, axis, out minA, out maxA);
+            Collisions.ProjectCircle(circleCenter, circleRadius, axis, out minB, out maxB);
+
+            if (minA >= maxB || minB >= maxA)
+            {
+                return false;
+            }
+
+            asixDepth = MathF.Min(maxB - minA, maxA - minB);
+
+            if (asixDepth < depth)
+            {
+                depth = asixDepth;
+                normal = axis;
+            }
+
+            depth /= LiteMath.Length(normal);
+            normal = LiteMath.Normalize(normal);
+
+            LiteVector polygonCenter = Collisions.FindArithmeticMean(vertices);
+
+            LiteVector direcetion = polygonCenter - circleCenter;
+
+            if (LiteMath.Dot(direcetion, normal) < 0)
+            {
+                normal = -normal;
+            }
+
+            return true;
+        }
+
+        private static int FindClosestPointOnPolygon(LiteVector circleCenter, LiteVector[] vertices)
+        {
+            int result = -1;
+            float minDistance = float.MaxValue;
+
+            for(int i = 0; i < vertices.Length; i++)
+            {
+                LiteVector v = vertices[i];
+                float distance = LiteMath.Distance(v, circleCenter);
+
+                if(distance < minDistance)
+                {
+                    minDistance = distance;
+                    result = i;
+                }
+            }
+
+            return result;
+        }
+
+        private static void ProjectCircle(LiteVector center, float radius, LiteVector axis, out float min, out float max)
+        {
+            LiteVector direction = LiteMath.Normalize(axis);
+            LiteVector directionRadius = direction * radius;
+
+            LiteVector p1 = center + directionRadius;
+            LiteVector p2 = center - directionRadius;
+
+            min = LiteMath.Dot(p1, axis);
+            max = LiteMath.Dot(p2, axis);
+
+            if(min > max)
+            {
+                float temp = min;
+                min = max;
+                max = temp;
+            }
+        }
+
+        public static bool IntersectPolygons(LiteVector[] verticesA, LiteVector[] verticesB,
+            out LiteVector normal, out float depth)
         {
             normal = LiteVector.Zero;
             depth = float.MaxValue;
