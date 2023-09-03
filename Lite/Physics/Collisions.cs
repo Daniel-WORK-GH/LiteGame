@@ -48,6 +48,7 @@ namespace Lite.Physics
             LiteVector cp = vertices[cpIndex];
 
             axis = cp - circleCenter;
+            axis.Normalize();
 
             Collisions.ProjectVertices(vertices, axis, out minA, out maxA);
             Collisions.ProjectCircle(circleCenter, circleRadius, axis, out minB, out maxB);
@@ -64,9 +65,6 @@ namespace Lite.Physics
                 depth = asixDepth;
                 normal = axis;
             }
-
-            depth /= LiteMath.Length(normal);
-            normal = LiteMath.Normalize(normal);
 
             LiteVector polygonCenter = Collisions.FindArithmeticMean(vertices);
 
@@ -176,9 +174,6 @@ namespace Lite.Physics
                     normal = axis;
                 }
             }
-
-            depth /= LiteMath.Length(normal);
-            normal = LiteMath.Normalize(normal);
 
             LiteVector centerA = Collisions.FindArithmeticMean(verticesA);
             LiteVector centerB = Collisions.FindArithmeticMean(verticesB);
