@@ -20,6 +20,8 @@ namespace Lite.Physics
         private float rotation;
         private float rotationalVelocity;
 
+        private LiteVector force;
+
         public readonly float Density;
         public readonly float Mass;
         public readonly float Restitution;
@@ -40,7 +42,13 @@ namespace Lite.Physics
 
         public LiteVector Position
         {
-            get { return position; }
+            get { return this.position; }
+        }
+
+        public LiteVector LinearVelocity
+        {
+            get { return this.linearVelocity; }
+            internal set { this.linearVelocity = value; }
         }
 
         private LiteBody(LiteVector position, float density, float mass,
@@ -51,6 +59,8 @@ namespace Lite.Physics
             this.linearVelocity = LiteVector.Zero;
             this.rotation = 0;
             this.rotationalVelocity = 0;
+
+            this.force = LiteVector.Zero;
 
             this.Density = density;
             this.Mass = mass;
@@ -100,8 +110,15 @@ namespace Lite.Physics
 
         public void Step(float time)
         {
+            LiteVector acceleration = this.force / this.Mass;
+
+            this.linearVelocity += acceleration * time;
+
             this.position += this.linearVelocity * time;
             this.rotation += this.rotationalVelocity * time;
+
+            this.force = LiteVector.Zero;
+            this.transformUpdateRequired = true;
         }
 
         public void Move(LiteVector amount)
@@ -114,6 +131,11 @@ namespace Lite.Physics
         {
             this.rotation += amount;
             this.transformUpdateRequired = true;
+        }
+
+        public void AddForce(LiteVector amount)
+        {
+            this.force = amount;
         }
 
         private static LiteVector[] CreateBoxVertices(float width, float height)

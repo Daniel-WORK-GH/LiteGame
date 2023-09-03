@@ -71,9 +71,24 @@ namespace Lite.Physics
                     {
                         bodyA.Move(-normal * depth / 2);   
                         bodyB.Move(normal * depth / 2);
+
+                        this.ResolveCollision(bodyA, bodyB, normal, depth);
                     }
                 }
             }
+        }
+
+        private void ResolveCollision(LiteBody bodyA, LiteBody bodyB, LiteVector normal, float depth)
+        {
+            LiteVector relativeVelocity = bodyB.LinearVelocity - bodyA.LinearVelocity;
+
+            float e = MathF.Min(bodyA.Restitution, bodyB.Restitution);
+
+            float j = -(1f + e) * LiteMath.Dot(relativeVelocity, normal);
+            j /= (1 / bodyA.Mass) + (1 / bodyB.Mass);
+
+            bodyA.LinearVelocity -= j / bodyA.Mass * normal;
+            bodyB.LinearVelocity += j / bodyB.Mass * normal;
         }
 
         private bool Collide(LiteBody bodyA, LiteBody bodyB, out LiteVector normal, out float depth)
