@@ -29,6 +29,12 @@ namespace Lite
             return random.NextSingle() * (max - min) + min;
         }
 
+        public static bool RandomBoolean()
+        {
+            int value = random.Next(0, 2);
+            return value == 1;
+        }
+
         public static Color RandomColor()
         {
             return new Color(
