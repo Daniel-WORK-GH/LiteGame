@@ -160,8 +160,8 @@ namespace Lite.Graphics
         {
             this.GetExtents(out float top, out float left, out float right, out float bottom);
 
-            min = new Vector2(left, bottom);
-            max = new Vector2(right, top);
+            min = new Vector2(left, top);
+            max = new Vector2(right, bottom);
         }
     }
 }
