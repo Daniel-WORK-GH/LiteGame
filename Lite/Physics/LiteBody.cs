@@ -24,6 +24,7 @@ namespace Lite.Physics
 
         public readonly float Density;
         public readonly float Mass;
+        public readonly float InvMass;
         public readonly float Restitution;
         public readonly float Area;
 
@@ -57,8 +58,8 @@ namespace Lite.Physics
         {
             this.position = position;
             this.linearVelocity = LiteVector.Zero;
-            this.rotation = 0;
-            this.rotationalVelocity = 0;
+            this.rotation = 0f;
+            this.rotationalVelocity = 0f;
 
             this.force = LiteVector.Zero;
 
@@ -73,6 +74,15 @@ namespace Lite.Physics
             this.Width = width;
             this.Height = height;
             this.ShapeType = shapeType;
+
+            if (!this.IsStatic)
+            {
+                this.InvMass = 1f / this.Mass;
+            }
+            else
+            {
+                this.InvMass = 0f;
+            }
 
             if (this.ShapeType == ShapeType.Box)
             {

@@ -67,10 +67,26 @@ namespace Lite.Physics
                 {
                     LiteBody bodyB = this.bodylist[j];
 
+                    if(bodyA.IsStatic && bodyB.IsStatic)
+                    {
+                        continue;
+                    }
+
                     if(Collide(bodyA, bodyB, out LiteVector normal, out float depth))
                     {
-                        bodyA.Move(-normal * depth / 2);   
-                        bodyB.Move(normal * depth / 2);
+                        if (bodyA.IsStatic)
+                        {
+                            bodyB.Move(normal * depth);
+                        }
+                        else if (bodyB.IsStatic)
+                        {
+                            bodyA.Move(-normal * depth);
+                        }
+                        else
+                        {
+                            bodyA.Move(-normal * depth / 2);
+                            bodyB.Move(normal * depth / 2);
+                        } 
 
                         this.ResolveCollision(bodyA, bodyB, normal, depth);
                     }
@@ -82,13 +98,20 @@ namespace Lite.Physics
         {
             LiteVector relativeVelocity = bodyB.LinearVelocity - bodyA.LinearVelocity;
 
+            if(LiteMath.Dot(relativeVelocity, normal) > 0f)
+            {
+                return;
+            }
+
             float e = MathF.Min(bodyA.Restitution, bodyB.Restitution);
 
             float j = -(1f + e) * LiteMath.Dot(relativeVelocity, normal);
-            j /= (1 / bodyA.Mass) + (1 / bodyB.Mass);
+            j /= bodyA.InvMass + bodyB.InvMass;
 
-            bodyA.LinearVelocity -= j / bodyA.Mass * normal;
-            bodyB.LinearVelocity += j / bodyB.Mass * normal;
+            LiteVector impulse = j * normal;
+
+            bodyA.LinearVelocity -= impulse * bodyA.InvMass;
+            bodyB.LinearVelocity += impulse * bodyB.InvMass;
         }
 
         private bool Collide(LiteBody bodyA, LiteBody bodyB, out LiteVector normal, out float depth)
