@@ -118,11 +118,14 @@ namespace Lite.Physics
             return this.transformedVertices;
         }
 
-        public void Step(float time)
+        internal void Step(float time, LiteVector gravity)
         {
-            LiteVector acceleration = this.force / this.Mass;
+            //LiteVector acceleration = this.force / this.Mass;
+            //this.linearVelocity += acceleration * time;
 
-            this.linearVelocity += acceleration * time;
+            if (this.IsStatic) return;
+
+            this.linearVelocity += gravity * time;
 
             this.position += this.linearVelocity * time;
             this.rotation += this.rotationalVelocity * time;
@@ -195,13 +198,13 @@ namespace Lite.Physics
                 return false;
             }
 
-            if (area < LiteWorld.MinDensity)
+            if (density < LiteWorld.MinDensity)
             {
                 error = $"Density is too small, Min density is {LiteWorld.MinDensity}";
                 return false;
             }
 
-            if (area > LiteWorld.MaxDensity)
+            if (density > LiteWorld.MaxDensity)
             {
                 error = $"Density is too big, Max density is {LiteWorld.MaxDensity}";
                 return false;
@@ -236,13 +239,13 @@ namespace Lite.Physics
                 return false;
             }
 
-            if (area < LiteWorld.MinDensity)
+            if (density < LiteWorld.MinDensity)
             {
                 error = $"Density is too small, Min density is {LiteWorld.MinDensity}";
                 return false;
             }
 
-            if (area > LiteWorld.MaxDensity)
+            if (density > LiteWorld.MaxDensity)
             {
                 error = $"Density is too big, Max density is {LiteWorld.MaxDensity}";
                 return false;

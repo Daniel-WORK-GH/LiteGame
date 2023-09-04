@@ -55,7 +55,7 @@ namespace Lite.Physics
             // Movement step
             for (int i = 0; i < this.bodylist.Count; i++)
             {
-                this.bodylist[i].Step(time);
+                this.bodylist[i].Step(time, gravity);
             }
 
             // Collision step
@@ -126,12 +126,16 @@ namespace Lite.Physics
             {
                 if(shapeTypeB is ShapeType.Box)
                 {
-                    return Collisions.IntersectPolygons(bodyA.GetTransformedVertices(), bodyB.GetTransformedVertices(), 
+                    return Collisions.IntersectPolygons(
+                        bodyA.Position, bodyA.GetTransformedVertices(),
+                        bodyB.Position, bodyB.GetTransformedVertices(), 
                         out normal, out depth);
                 }
                 else if(shapeTypeB == ShapeType.Circle)
                 {
-                    bool result = Collisions.IntersectCirclePolygon(bodyB.Position, bodyB.Raidus, bodyA.GetTransformedVertices(),
+                    bool result = Collisions.IntersectCirclePolygon(
+                        bodyB.Position, bodyB.Raidus,
+                        bodyA.Position, bodyA.GetTransformedVertices(),
                         out normal, out depth);
 
                     normal = -normal;
@@ -142,7 +146,9 @@ namespace Lite.Physics
             {
                 if (shapeTypeB is ShapeType.Box)
                 {
-                    return Collisions.IntersectCirclePolygon(bodyA.Position, bodyA.Raidus, bodyB.GetTransformedVertices(),
+                    return Collisions.IntersectCirclePolygon(
+                        bodyA.Position, bodyA.Raidus,
+                        bodyB.Position, bodyB.GetTransformedVertices(),
                         out normal, out depth);
                 }
                 else if (shapeTypeB == ShapeType.Circle)
