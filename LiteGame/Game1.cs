@@ -23,10 +23,7 @@ namespace LiteGame
 
         private LiteWorld world;
 
-        private List<Color> colors;
-        private List<Color> outlinecolors;
-
-        private Vector2[] vertexBuffer;
+        private List<LiteEntity> entities;
 
         private Texture2D texture;
 
@@ -50,18 +47,19 @@ namespace LiteGame
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
+            this.Window.Position = new Point(10, 40);
+
             shapes = new Shapes(this);
             screen = new Screen(this, 1280, 720);
             camera = new Camera(screen);
 
-            camera.SetScale(24);
+            camera.SetScale(20);
             camera.UpdateMatrices();
 
             this.texture = new Texture2D(GraphicsDevice, 1, 1);
             this.texture.SetData<Color>(new Color[] { Color.White });
 
-            this.colors = new();
-            this.outlinecolors = new();
+            this.entities = new();
 
             this.world = new LiteWorld();
 
@@ -75,8 +73,7 @@ namespace LiteGame
             }
             groudbody.MoveTo(new LiteVector(0, 10f));
             this.world.AddBody(groudbody);
-            this.colors.Add(Color.DarkGreen);
-            this.outlinecolors.Add(Color.White);
+            this.entities.Add(new LiteEntity(groudbody, Color.DarkGreen));
 
             if (!LiteBody.CreateBoxBody(20f, 2f, 1f, 0.5f, true,
                 out LiteBody ledgebody1, out err))
@@ -86,8 +83,7 @@ namespace LiteGame
             ledgebody1.MoveTo(new LiteVector(-10f, -3f));
             ledgebody1.Rotate(MathHelper.TwoPi / 20f);
             this.world.AddBody(ledgebody1);
-            this.colors.Add(Color.DarkGray);
-            this.outlinecolors.Add(Color.White);
+            this.entities.Add(new LiteEntity(ledgebody1, Color.DarkGray));
 
             if (!LiteBody.CreateBoxBody(15f, 2f, 1f, 0.5f, true,
                 out LiteBody ledgebody2, out err))
@@ -97,8 +93,7 @@ namespace LiteGame
             ledgebody2.MoveTo(new LiteVector(10f, -10f));
             ledgebody2.Rotate(-MathHelper.TwoPi / 20f);
             this.world.AddBody(ledgebody2);
-            this.colors.Add(Color.DarkGray);
-            this.outlinecolors.Add(Color.White);
+            this.entities.Add(new LiteEntity(ledgebody2, Color.DarkRed));
 
             this.watch = new Stopwatch();
             this.sampletimer.Start();
@@ -124,34 +119,20 @@ namespace LiteGame
 
             if (MouseHelper.IsRightClick())
             {
-                float w = RandomHelper.RandomSingle(1f, 2f);
-                float h = RandomHelper.RandomSingle(1f, 2f);
+                float w = RandomHelper.RandomSingle(2f, 3f);
+                float h = RandomHelper.RandomSingle(2f, 3f);
 
                 LiteVector pos = MouseHelper.GetMouseWorldPosition(this, screen, camera).ToLiteVector();
 
-                if (!LiteBody.CreateBoxBody(w, h, 2f, 0.6f, false, out LiteBody body, out string err))
-                {
-                    throw new Exception(err);
-                }
-                body.MoveTo(pos);
-                this.world.AddBody(body);
-                this.colors.Add(RandomHelper.RandomColor());
-                this.outlinecolors.Add(Color.White);
+                this.entities.Add(new LiteEntity(this.world, w, h, false, pos));
             }
             if (MouseHelper.IsLeftClick())
             {
-                float r = RandomHelper.RandomSingle(0.75f, 1.5f);
+                float r = RandomHelper.RandomSingle(1.25f, 1.5f);
      
                 LiteVector pos = MouseHelper.GetMouseWorldPosition(this, screen, camera).ToLiteVector();
 
-                if (!LiteBody.CreateCircleBody(r, 2f, 0.6f, false, out LiteBody body, out string err))
-                {
-                    throw new Exception(err);
-                }
-                body.MoveTo(pos);
-                this.world.AddBody(body);
-                this.colors.Add(RandomHelper.RandomColor());
-                this.outlinecolors.Add(Color.White);
+                this.entities.Add(new LiteEntity(this.world, r, false, pos));
             }
 
             if (KeyboardHelper.IsClicked(Keys.OemTilde))
@@ -160,33 +141,6 @@ namespace LiteGame
                 Console.WriteLine($"stop time : {Math.Round(this.watch.Elapsed.TotalMilliseconds, 4)}");
             }
 
-#if false
-            float dx = 0f;
-            float dy = 0f;
-            float speedMagnitute = 96f;
-
-            if (KeyboardHelper.IsPressed(Keys.W)) dy -= 1;
-            if (KeyboardHelper.IsPressed(Keys.A)) dx -= 1;
-            if (KeyboardHelper.IsPressed(Keys.D)) dx += 1;
-            if (KeyboardHelper.IsPressed(Keys.S)) dy += 1;
-
-            if (!this.world.GetBody(0, out LiteBody body))
-            {
-                throw new Exception("");
-            }
-
-            if (KeyboardHelper.IsPressed(Keys.E)) body.Rotate(MathF.PI / 2f * LiteUtil.GetElapsedTimeSeconds(gameTime));
-            if (KeyboardHelper.IsPressed(Keys.Q)) body.Rotate(-MathF.PI / 2f * LiteUtil.GetElapsedTimeSeconds(gameTime));
-
-            if (dx != 0 || dy != 0)
-            {
-                LiteVector forceDirc = LiteMath.Normalize(new LiteVector(dx, dy));
-                LiteVector force = forceDirc * speedMagnitute;
-
-                body.AddForce(force);
-            }
-            WrapScreen();
-#endif
             if(this.sampletimer.Elapsed.TotalSeconds > 1d)
             {
                 this.bodyCountString = "BodyCount : " + Math.Round(this.totalBodyCount / (double)this.totalSampleCount, 4).ToString();
@@ -208,20 +162,18 @@ namespace LiteGame
 
             this.camera.GetExtents(out _, out _, out _, out float bottom);
 
-            for (int i = 0; i < this.world.BodyCount; i++)
+            for (int i = 0; i < this.entities.Count; i++)
             {
-                if (!this.world.GetBody(i, out LiteBody body))
-                {
-                    throw new Exception("");
-                }
+                LiteBody body = this.entities[i].Body;
+
+                if (body.IsStatic) continue;
 
                 LiteAABB box = body.GetAABB();
 
                 if(box.Min.Y > bottom)
                 {
                     this.world.RemoveBody(body);
-                    this.colors.RemoveAt(i);
-                    this.outlinecolors.RemoveAt(i);
+                    this.entities.Remove(this.entities[i]);
                     i--;
                 }
             }
@@ -235,34 +187,9 @@ namespace LiteGame
 
             shapes.Begin(camera);
 
-            for(int i = 0; i < this.world.BodyCount; i++)
+            for(int i = 0; i < this.entities.Count; i++)
             {
-                if(!this.world.GetBody(i, out LiteBody body))
-                {
-                    throw new Exception("");
-                }
-
-                Vector2 position = body.Position.ToVector2();
-
-                if(body.ShapeType == ShapeType.Circle)
-                {
-                    shapes.FillCircle(position, body.Radius, 26, colors[i]);
-                    shapes.DrawCircle(position, body.Radius, 26, 2f, this.outlinecolors[i]);
-                }
-                else if(body.ShapeType == ShapeType.Box)
-                {
-                    //shapes.FillRectangle(position.X, position.Y, body.Width, body.Height, Color.White);
-                    LiteConverter.ToVector2Array(body.GetTransformedVertices(), ref vertexBuffer);
-
-                    shapes.FillBox(body.Position.ToVector2(), body.Width, body.Height, body.Angle, colors[i]);
-                    shapes.DrawPolygon(vertexBuffer, 2f, this.outlinecolors[i]);
-                }
-            }
-
-            List<LiteVector> contactPoints = this.world.ContactPointsList;
-            for(int i = 0; i < contactPoints.Count; i++)
-            {
-                shapes.FillBox(contactPoints[i].ToVector2(), 0.5f, 0.5f, Color.Orange);
+                this.entities[i].Draw(this.shapes);
             }
 
             shapes.End();
@@ -275,27 +202,6 @@ namespace LiteGame
             this._spriteBatch.End();
 
             base.Draw(gameTime);
-        }
-
-        private void WrapScreen()
-        {
-            this.camera.GetExtents(out Vector2 camMin, out Vector2 camMax);
-
-            float viewWidth = camMax.X - camMin.X;
-            float viewHeight = camMax.Y - camMin.Y;
-
-            for (int i = 0; i < this.world.BodyCount; i++)
-            {
-                if(!this.world.GetBody(i, out LiteBody body))
-                {
-                    throw new Exception("");
-                }
-
-                if (body.Position.X < camMin.X) body.Move(new LiteVector(viewWidth, 0f));
-                if (body.Position.Y < camMin.Y) body.Move(new LiteVector(0f, viewHeight));
-                if (body.Position.X > camMax.X) body.Move(new LiteVector(-viewWidth, 0f));
-                if (body.Position.Y > camMax.Y) body.Move(new LiteVector(0f, -viewHeight));
-            }
         }
     }
 }
