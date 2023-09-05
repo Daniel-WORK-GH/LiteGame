@@ -167,6 +167,92 @@ namespace Lite.Graphics
             this.FillRectangle(rect.X, rect.Y, rect.Width, rect.Height, color);
         }
 
+        public void FillBox(Vector2 center, float width, float height, Color color)
+        {
+            float halfwidth = width / 2;
+            float halfheight = height / 2;
+
+            this.FillRectangle(center.X - halfwidth, center.Y - halfheight, width, height, color);
+        }
+
+        public void FillBox(Vector2 center, float width, float height, float rotation, Color color)
+        {
+            this.FillBox(center, width, height, rotation, Vector2.One, color);
+        }
+
+        public void FillBox(Vector2 center, float width, float height, float rotation, Vector2 scale, Color color)
+        {
+            this.EnsureStarted();
+
+            int shapeVertexCount = 4;
+            int shapeIndexCount = 6;
+
+            this.EnsureSpace(shapeVertexCount, shapeIndexCount);
+
+            float left = -width * 0.5f;
+            float right = left + width;
+            float top = -height * 0.5f;
+            float bottom = top + height;
+
+            // Precompute the trig. functions.
+            float sin = MathF.Sin(rotation);
+            float cos = MathF.Cos(rotation);
+
+            // Vector components:
+            float ax = left;
+            float ay = top;
+            float bx = right;
+            float by = top;
+            float cx = right;
+            float cy = bottom;
+            float dx = left;
+            float dy = bottom;
+
+            // Scale transform:
+            float sx1 = ax * scale.X;
+            float sy1 = ay * scale.Y;
+            float sx2 = bx * scale.X;
+            float sy2 = by * scale.Y;
+            float sx3 = cx * scale.X;
+            float sy3 = cy * scale.Y;
+            float sx4 = dx * scale.X;
+            float sy4 = dy * scale.Y;
+
+            // Rotation transform:
+            float rx1 = sx1 * cos - sy1 * sin;
+            float ry1 = sx1 * sin + sy1 * cos;
+            float rx2 = sx2 * cos - sy2 * sin;
+            float ry2 = sx2 * sin + sy2 * cos;
+            float rx3 = sx3 * cos - sy3 * sin;
+            float ry3 = sx3 * sin + sy3 * cos;
+            float rx4 = sx4 * cos - sy4 * sin;
+            float ry4 = sx4 * sin + sy4 * cos;
+
+            // Translation transform:
+            ax = rx1 + center.X;
+            ay = ry1 + center.Y;
+            bx = rx2 + center.X;
+            by = ry2 + center.Y;
+            cx = rx3 + center.X;
+            cy = ry3 + center.Y;
+            dx = rx4 + center.X;
+            dy = ry4 + center.Y;
+
+            this.indices[this.indicesCount++] = 0 + this.verticesCount;
+            this.indices[this.indicesCount++] = 1 + this.verticesCount;
+            this.indices[this.indicesCount++] = 2 + this.verticesCount;
+            this.indices[this.indicesCount++] = 0 + this.verticesCount;
+            this.indices[this.indicesCount++] = 2 + this.verticesCount;
+            this.indices[this.indicesCount++] = 3 + this.verticesCount;
+
+            this.vertices[this.verticesCount++] = new VertexPositionColor(new Vector3(ax, ay, 0f), color);
+            this.vertices[this.verticesCount++] = new VertexPositionColor(new Vector3(bx, by, 0f), color);
+            this.vertices[this.verticesCount++] = new VertexPositionColor(new Vector3(cx, cy, 0f), color);
+            this.vertices[this.verticesCount++] = new VertexPositionColor(new Vector3(dx, dy, 0f), color);
+
+            this.shapeCount++;
+        }
+
         public void DrawRectangle(float x, float y, float width, float height, float thickness, Color color)
         {
             const int RectVertices = 4;
@@ -187,6 +273,14 @@ namespace Lite.Graphics
         public void DrawRectangle(Rectangle rect, float thickness, Color color)
         {
             this.DrawRectangle(rect.X, rect.Y, rect.Width, rect.Height, thickness, color);
+        }
+
+        public void DrawBox(Vector2 center, float width, float height, float thickness, Color color)
+        {
+            float halfwidth = width / 2;
+            float halfheight = height / 2;
+
+            this.DrawRectangle(center.X - halfwidth, center.Y - halfheight, width, height, thickness, color);
         }
 
         public void FillCircle(float centerx, float centery, float radius, int points, Color color)
