@@ -57,6 +57,12 @@ namespace Lite.Physics
             get { return this.angle; }
         }
 
+        public float AngularVelocity
+        {
+            get { return this.angularVelocity; }
+            internal set { this.angularVelocity = value; }
+        }
+
         private LiteBody(float density, float mass, float inertia,
             float restitution, float area, bool isStatic, float radius,
             float width, float height, LiteVector[] vertices, ShapeType shapeType)
