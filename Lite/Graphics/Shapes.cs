@@ -283,6 +283,73 @@ namespace Lite.Graphics
             this.DrawRectangle(center.X - halfwidth, center.Y - halfheight, width, height, thickness, color);
         }
 
+        public void DrawBox(Vector2 center, float width, float height, float thickness, float rotation, Color color)
+        {
+            this.DrawBox(center, width, height, thickness, rotation, Vector2.One, color);
+        }
+
+        public void DrawBox(Vector2 center, float width, float height, float thickness, float rotation, Vector2 scale, Color color)
+        {
+            float left = -width * 0.5f;
+            float right = left + width;
+            float top = -height * 0.5f;
+            float bottom = top + height;
+
+            // Precompute the trig. functions.
+            float sin = MathF.Sin(rotation);
+            float cos = MathF.Cos(rotation);
+
+            // Vector components:
+            float ax = left;
+            float ay = top;
+            float bx = right;
+            float by = top;
+            float cx = right;
+            float cy = bottom;
+            float dx = left;
+            float dy = bottom;
+
+            // Scale transform:
+            float sx1 = ax * scale.X;
+            float sy1 = ay * scale.Y;
+            float sx2 = bx * scale.X;
+            float sy2 = by * scale.Y;
+            float sx3 = cx * scale.X;
+            float sy3 = cy * scale.Y;
+            float sx4 = dx * scale.X;
+            float sy4 = dy * scale.Y;
+
+            // Rotation transform:
+            float rx1 = sx1 * cos - sy1 * sin;
+            float ry1 = sx1 * sin + sy1 * cos;
+            float rx2 = sx2 * cos - sy2 * sin;
+            float ry2 = sx2 * sin + sy2 * cos;
+            float rx3 = sx3 * cos - sy3 * sin;
+            float ry3 = sx3 * sin + sy3 * cos;
+            float rx4 = sx4 * cos - sy4 * sin;
+            float ry4 = sx4 * sin + sy4 * cos;
+
+            // Translation transform:
+            ax = rx1 + center.X;
+            ay = ry1 + center.Y;
+            bx = rx2 + center.X;
+            by = ry2 + center.Y;
+            cx = rx3 + center.X;
+            cy = ry3 + center.Y;
+            dx = rx4 + center.X;
+            dy = ry4 + center.Y;
+
+            Vector2 p1 = new Vector2(ax, ay);
+            Vector2 p2 = new Vector2(bx, by);
+            Vector2 p3 = new Vector2(cx, cy);
+            Vector2 p4 = new Vector2(dx, dy);
+
+            this.DrawLine(p1, p2, thickness, color);
+            this.DrawLine(p2, p3, thickness, color);
+            this.DrawLine(p3, p4, thickness, color);
+            this.DrawLine(p4, p1, thickness, color);
+        }
+
         public void FillCircle(float centerx, float centery, float radius, int points, Color color)
         {
             const int MinPoints = 3;
