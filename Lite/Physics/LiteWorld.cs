@@ -14,8 +14,14 @@ namespace Lite.Physics
         public const float MinDensity = 0.5f; // g/cm^3
         public const float MaxDensity = 22f;
 
+        public const int MinIterations = 1;
+        public const int MaxIterations = 128;
+
         private List<LiteBody> bodylist;
         private LiteVector gravity;
+        private List<LiteManifold> contactList;
+
+        public List<LiteVector> ContactPointsList;
 
         public int BodyCount
         {
@@ -26,6 +32,8 @@ namespace Lite.Physics
         {
             this.gravity = new LiteVector(0f, 9.81f);
             this.bodylist = new List<LiteBody>();
+            this.contactList = new List<LiteManifold>();
+            this.ContactPointsList = new List<LiteVector>();
         }
 
         public void AddBody(LiteBody body)
@@ -50,52 +58,94 @@ namespace Lite.Physics
             return true;
         }
 
-        public void Step(float time)
+        public void Step(float time, int iterations)
         {
-            // Movement step
-            for (int i = 0; i < this.bodylist.Count; i++)
-            {
-                this.bodylist[i].Step(time, gravity);
-            }
+            iterations = Math.Clamp(iterations, LiteWorld.MinIterations, LiteWorld.MaxIterations);
 
-            // Collision step
-            for (int i = 0; i < this.bodylist.Count; i++)
-            {
-                LiteBody bodyA = this.bodylist[i];
+            this.ContactPointsList.Clear();
 
-                for (int j = i + 1; j < this.bodylist.Count; j++)
+            for (int it = 0; it < iterations; it++)
+            {
+                // Movement step
+                for (int i = 0; i < this.bodylist.Count; i++)
                 {
-                    LiteBody bodyB = this.bodylist[j];
+                    this.bodylist[i].Step(time, gravity, iterations);
+                }
 
-                    if(bodyA.IsStatic && bodyB.IsStatic)
+                this.contactList.Clear();
+
+                // Collision step
+                for (int i = 0; i < this.bodylist.Count; i++)
+                {
+                    LiteBody bodyA = this.bodylist[i];
+                    LiteAABB bodyA_aabb = bodyA.GetAABB();
+
+                    for (int j = i + 1; j < this.bodylist.Count; j++)
                     {
-                        continue;
+                        LiteBody bodyB = this.bodylist[j];
+                        LiteAABB bodyB_aabb = bodyB.GetAABB();
+
+                        if (bodyA.IsStatic && bodyB.IsStatic)
+                        {
+                            continue;
+                        }
+
+                        if(!Collisions.IntersectAABB(bodyA_aabb, bodyB_aabb))
+                        {
+                            continue;
+                        }
+
+                        if (Collisions.Collide(bodyA, bodyB, out LiteVector normal, out float depth))
+                        {
+                            if (bodyA.IsStatic)
+                            {
+                                bodyB.Move(normal * depth);
+                            }
+                            else if (bodyB.IsStatic)
+                            {
+                                bodyA.Move(-normal * depth);
+                            }
+                            else
+                            {
+                                bodyA.Move(-normal * depth / 2);
+                                bodyB.Move(normal * depth / 2);
+                            }
+
+                            Collisions.FindContactPoints(bodyA, bodyB, out LiteVector contact1,
+                                out LiteVector contact2, out int contactCount);
+
+                            LiteManifold contact = new LiteManifold(bodyA, bodyB, normal, depth,
+                                contact1, contact2, contactCount);
+                            this.contactList.Add(contact);
+                        }
                     }
+                }
 
-                    if(Collide(bodyA, bodyB, out LiteVector normal, out float depth))
+                for(int i = 0; i < this.contactList.Count; i++)
+                {
+                    LiteManifold contact =  this.contactList[i];
+                    this.ResolveCollision(contact);
+
+                    if (contact.ContactCount > 0)
                     {
-                        if (bodyA.IsStatic)
-                        {
-                            bodyB.Move(normal * depth);
-                        }
-                        else if (bodyB.IsStatic)
-                        {
-                            bodyA.Move(-normal * depth);
-                        }
-                        else
-                        {
-                            bodyA.Move(-normal * depth / 2);
-                            bodyB.Move(normal * depth / 2);
-                        } 
+                        this.ContactPointsList.Add(contact.Contact1);
 
-                        this.ResolveCollision(bodyA, bodyB, normal, depth);
+                        if (contact.ContactCount > 1)
+                        {     
+                            this.ContactPointsList.Add(contact.Contact2);                       
+                        }
                     }
                 }
             }
         }
 
-        private void ResolveCollision(LiteBody bodyA, LiteBody bodyB, LiteVector normal, float depth)
+        private void ResolveCollision(in LiteManifold contact)
         {
+            LiteBody bodyA = contact.BodyA;
+            LiteBody bodyB = contact.BodyB;
+            LiteVector normal = contact.Normal;
+            float depth = contact.Depth;
+
             LiteVector relativeVelocity = bodyB.LinearVelocity - bodyA.LinearVelocity;
 
             if(LiteMath.Dot(relativeVelocity, normal) > 0f)
@@ -112,53 +162,6 @@ namespace Lite.Physics
 
             bodyA.LinearVelocity -= impulse * bodyA.InvMass;
             bodyB.LinearVelocity += impulse * bodyB.InvMass;
-        }
-
-        private bool Collide(LiteBody bodyA, LiteBody bodyB, out LiteVector normal, out float depth)
-        {
-            normal = LiteVector.Zero;
-            depth = 0;
-
-            ShapeType shapeTypeA = bodyA.ShapeType;
-            ShapeType shapeTypeB = bodyB.ShapeType;
-
-            if(shapeTypeA is ShapeType.Box)
-            {
-                if(shapeTypeB is ShapeType.Box)
-                {
-                    return Collisions.IntersectPolygons(
-                        bodyA.Position, bodyA.GetTransformedVertices(),
-                        bodyB.Position, bodyB.GetTransformedVertices(), 
-                        out normal, out depth);
-                }
-                else if(shapeTypeB == ShapeType.Circle)
-                {
-                    bool result = Collisions.IntersectCirclePolygon(
-                        bodyB.Position, bodyB.Raidus,
-                        bodyA.Position, bodyA.GetTransformedVertices(),
-                        out normal, out depth);
-
-                    normal = -normal;
-                    return result;
-                }
-            }
-            if (shapeTypeA is ShapeType.Circle)
-            {
-                if (shapeTypeB is ShapeType.Box)
-                {
-                    return Collisions.IntersectCirclePolygon(
-                        bodyA.Position, bodyA.Raidus,
-                        bodyB.Position, bodyB.GetTransformedVertices(),
-                        out normal, out depth);
-                }
-                else if (shapeTypeB == ShapeType.Circle)
-                {
-                    return Collisions.IntersectCircles(bodyA.Position, bodyA.Raidus, bodyB.Position, bodyB.Raidus,
-                        out normal, out depth);
-                }
-            }
-
-            return false;
-        }
+        }  
     }
 }
