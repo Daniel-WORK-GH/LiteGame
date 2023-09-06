@@ -264,11 +264,12 @@ namespace Lite.Physics
                 }
             }
 
+
             int cpIndex = Collisions.FindClosestPointOnPolygon(circleCenter, vertices);
             LiteVector cp = vertices[cpIndex];
 
             axis = cp - circleCenter;
-            axis.Normalize();
+            axis = axis.Normalize();
 
             Collisions.ProjectVertices(vertices, axis, out minA, out maxA);
             Collisions.ProjectCircle(circleCenter, circleRadius, axis, out minB, out maxB);
@@ -293,7 +294,8 @@ namespace Lite.Physics
                 normal = -normal;
             }
 
-            return true;
+
+            return true;            
         }
 
         private static int FindClosestPointOnPolygon(LiteVector circleCenter, LiteVector[] vertices)
@@ -310,6 +312,11 @@ namespace Lite.Physics
                 {
                     minDistance = distance;
                     result = i;
+                }
+
+                if (i == vertices.Length - 1 && result == -1)
+                {
+                    throw new Exception("");
                 }
             }
 
