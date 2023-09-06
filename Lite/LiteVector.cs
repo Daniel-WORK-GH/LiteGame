@@ -27,6 +27,11 @@ namespace Lite
                 transform.Sin * v.X + transform.Cos * v.Y + transform.PositionY);
         }
 
+        public override string ToString()
+        {
+            return $"({X}, {Y})";
+        }
+
         public static LiteVector operator +(LiteVector a, LiteVector b) => new LiteVector(a.X + b.X, a.Y + b.Y);
         public static LiteVector operator -(LiteVector a, LiteVector b) => new LiteVector(a.X - b.X, a.Y - b.Y);
         public static LiteVector operator -(LiteVector v) => new LiteVector(-v.X, -v.Y);
