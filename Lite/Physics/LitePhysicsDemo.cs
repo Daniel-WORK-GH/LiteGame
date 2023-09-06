@@ -99,7 +99,7 @@ namespace Lite.Physics
                 float w = RandomHelper.RandomSingle(2f, 3f);
                 float h = RandomHelper.RandomSingle(2f, 3f);
 
-                LiteVector pos = MouseHelper.GetMouseWorldPosition(game, screen, camera).ToLiteVector();
+                LiteVector pos = MouseHelper.GetMouseWorldPosition(screen, camera).ToLiteVector();
 
                 this.entities.Add(new LiteEntity(this.world, w, h, false, pos));
             }
@@ -107,7 +107,7 @@ namespace Lite.Physics
             {
                 float r = RandomHelper.RandomSingle(1.25f, 1.5f);
 
-                LiteVector pos = MouseHelper.GetMouseWorldPosition(game, screen, camera).ToLiteVector();
+                LiteVector pos = MouseHelper.GetMouseWorldPosition(screen, camera).ToLiteVector();
 
                 this.entities.Add(new LiteEntity(this.world, r, false, pos));
             }

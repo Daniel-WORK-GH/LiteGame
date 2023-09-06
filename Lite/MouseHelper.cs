@@ -31,7 +31,7 @@ namespace Lite
             return currentMouseState.RightButton == ButtonState.Pressed && previousMouseState.RightButton == ButtonState.Released;
         }
 
-        public static Vector2 GetMouseScreenPosition(Game game, Screen screen)
+        public static Vector2 GetMouseScreenPosition(Screen screen)
         {
             // Get the size and position of the screen when stretched to fit into the game window (keeping the correct aspect ratio).
             Rectangle screenDestinationRectangle = screen.CalculateDestinationRectangle();
@@ -54,13 +54,13 @@ namespace Lite
             return new Vector2(x, y);
         }
 
-        public static Vector2 GetMouseWorldPosition(Game game, Screen screen, Camera camera)
+        public static Vector2 GetMouseWorldPosition(Screen screen, Camera camera)
         {
             // Create a viewport based on the game screen.
             Viewport screenViewport = new Viewport(0, 0, screen.Width, screen.Height);
 
             // Get the mouse pixel coordinates in that screen.
-            Vector2 mouseScreenPosition = GetMouseScreenPosition(game, screen);
+            Vector2 mouseScreenPosition = GetMouseScreenPosition(screen);
 
             // Create a ray that starts at the mouse screen position and points "into" the screen towards the game world plane.
             Ray mouseRay = CreateMouseRay(mouseScreenPosition, screenViewport, camera);
