@@ -264,7 +264,7 @@ namespace Lite.Physics
             body = null;
             error = string.Empty;
 
-            float area = radius * MathF.PI;
+            float area = radius * radius * MathF.PI;
 
             if(area < LiteWorld.MinBodySize)
             {
