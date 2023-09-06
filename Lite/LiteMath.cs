@@ -34,12 +34,7 @@ namespace Lite
 
         public static LiteVector Normalize(this LiteVector v)
         {
-            float len = v.Length();
-            if (LiteMath.NearlyEqual(len, 0))
-            {
-                return v;
-            }
-            return v / v.Length();
+            return new LiteVector(v.X, v.Y) / v.Length();
         }
 
         public static float Dot(LiteVector a, LiteVector b)

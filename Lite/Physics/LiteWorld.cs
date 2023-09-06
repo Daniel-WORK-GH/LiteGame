@@ -24,10 +24,8 @@ namespace Lite.Physics
 
         private LiteVector[] contactList;
         private LiteVector[] impulseList;
-        private LiteVector[] frictionImpulseList;
         private LiteVector[] raList;
         private LiteVector[] rbList;
-        private float[] jlist;
 
         public int BodyCount
         {
@@ -42,10 +40,8 @@ namespace Lite.Physics
 
             this.contactList = new LiteVector[2];
             this.impulseList = new LiteVector[2];
-            this.frictionImpulseList = new LiteVector[2];
             this.raList = new LiteVector[2];
             this.rbList = new LiteVector[2];
-            this.jlist = new float[2];
         }
 
         public void AddBody(LiteBody body)
@@ -127,7 +123,7 @@ namespace Lite.Physics
 
                     LiteManifold contact = new LiteManifold(bodyA, bodyB, normal, depth,
                         contact1, contact2, contactCount);
-                    this.ResolveCollisionWithRotationAndFriction(in contact);
+                    this.ResolveCollisionWithRotation(in contact);
                 }
 
             }
@@ -176,6 +172,7 @@ namespace Lite.Physics
 
             float j = -(1f + e) * LiteMath.Dot(relativeVelocity, normal);
             j /= bodyA.InvMass + bodyB.InvMass;
+
             LiteVector impulse = j * normal;
 
             bodyA.LinearVelocity += -impulse * bodyA.InvMass;
@@ -208,8 +205,8 @@ namespace Lite.Physics
                 LiteVector ra = contactList[i] - bodyA.Position;
                 LiteVector rb = contactList[i] - bodyB.Position;
 
-                this.raList[i] = ra;
-                this.rbList[i] = rb;
+                raList[i] = ra;
+                rbList[i] = rb;
 
                 LiteVector raPerp = new LiteVector(-ra.Y, ra.X);
                 LiteVector rbPerp = new LiteVector(-rb.Y, rb.X);
@@ -240,167 +237,19 @@ namespace Lite.Physics
                 j /= (float)contactCount;
 
                 LiteVector impulse = j * normal;
-                this.impulseList[i] = impulse;
+                impulseList[i] = impulse;
             }
 
             for(int i = 0; i < contactCount; i++)
             {
-                LiteVector impulse = this.impulseList[i];
-                LiteVector ra = this.raList[i];
-                LiteVector rb = this.rbList[i];
+                LiteVector impulse = impulseList[i];
+                LiteVector ra = raList[i];
+                LiteVector rb = rbList[i];
 
                 bodyA.LinearVelocity += -impulse * bodyA.InvMass;
                 bodyA.AngularVelocity += -LiteMath.Cross(ra, impulse) * bodyA.InvInertia;
                 bodyB.LinearVelocity += impulse * bodyB.InvMass;
                 bodyB.AngularVelocity += LiteMath.Cross(rb, impulse) * bodyB.InvInertia;
-            }
-        }
-
-        private void ResolveCollisionWithRotationAndFriction(in LiteManifold contact)
-        {
-            LiteBody bodyA = contact.BodyA;
-            LiteBody bodyB = contact.BodyB;
-            LiteVector normal = contact.Normal;
-            LiteVector contact1 = contact.Contact1;
-            LiteVector contact2 = contact.Contact2;
-            int contactCount = contact.ContactCount;
-
-            float e = MathF.Min(bodyA.Restitution, bodyB.Restitution);
-
-            float sf = (bodyA.StaticFriction + bodyB.StaticFriction) / 2f;
-            float df = (bodyA.DynamicFriction + bodyB.DynamicFriction) / 2f;
-
-            this.contactList[0] = contact1;
-            this.contactList[1] = contact2;
-
-            for (int i = 0; i < contactCount; i++)
-            {
-                this.impulseList[i] = LiteVector.Zero;
-                this.raList[i] = LiteVector.Zero;
-                this.rbList[i] = LiteVector.Zero;
-                this.frictionImpulseList[i] = LiteVector.Zero;
-                this.jlist[i] = 0f;
-            }
-
-            for (int i = 0; i < contactCount; i++)
-            {
-                LiteVector ra = contactList[i] - bodyA.Position;
-                LiteVector rb = contactList[i] - bodyB.Position;
-
-                this.raList[i] = ra;
-                this.rbList[i] = rb;
-
-                LiteVector raPerp = new LiteVector(-ra.Y, ra.X);
-                LiteVector rbPerp = new LiteVector(-rb.Y, rb.X);
-
-                LiteVector angularLinerVelocityA = raPerp * bodyA.AngularVelocity;
-                LiteVector angularLinerVelocityB = rbPerp * bodyB.AngularVelocity;
-
-                LiteVector relativeVelocity =
-                    (bodyB.LinearVelocity + angularLinerVelocityB) -
-                    (bodyA.LinearVelocity + angularLinerVelocityA);
-
-                float contactVelocityMag = LiteMath.Dot(relativeVelocity, normal);
-
-                if (contactVelocityMag > 0f)
-                {
-                    continue;
-                }
-
-                float raPrepDotN = LiteMath.Dot(raPerp, normal);
-                float rbPrepDotN = LiteMath.Dot(rbPerp, normal);
-
-                float denom = (bodyA.InvMass + bodyB.InvMass) +
-                    (raPrepDotN * raPrepDotN) * bodyA.InvInertia +
-                    (rbPrepDotN * rbPrepDotN) * bodyB.InvInertia;
-
-                float j = -(1f + e) * contactVelocityMag;
-                j /= denom;
-                j /= (float)contactCount;
-
-                jlist[i] = j;
-
-                LiteVector impulse = j * normal;
-                this.impulseList[i] = impulse;
-            }
-
-            for (int i = 0; i < contactCount; i++)
-            {
-                LiteVector impulse = this.impulseList[i];
-                LiteVector ra = this.raList[i];
-                LiteVector rb = this.rbList[i];
-
-                bodyA.LinearVelocity += -impulse * bodyA.InvMass;
-                bodyA.AngularVelocity += -LiteMath.Cross(ra, impulse) * bodyA.InvInertia;
-                bodyB.LinearVelocity += impulse * bodyB.InvMass;
-                bodyB.AngularVelocity += LiteMath.Cross(rb, impulse) * bodyB.InvInertia;
-            }
-
-            // friction impulses 
-            for (int i = 0; i < contactCount; i++)
-            {
-                LiteVector ra = contactList[i] - bodyA.Position;
-                LiteVector rb = contactList[i] - bodyB.Position;
-
-                this.raList[i] = ra;
-                this.rbList[i] = rb;
-
-                LiteVector raPerp = new LiteVector(-ra.Y, ra.X);
-                LiteVector rbPerp = new LiteVector(-rb.Y, rb.X);
-
-                LiteVector angularLinerVelocityA = raPerp * bodyA.AngularVelocity;
-                LiteVector angularLinerVelocityB = rbPerp * bodyB.AngularVelocity;
-
-                LiteVector relativeVelocity =
-                    (bodyB.LinearVelocity + angularLinerVelocityB) -
-                    (bodyA.LinearVelocity + angularLinerVelocityA);
-
-                LiteVector tangent = relativeVelocity - LiteMath.Dot(relativeVelocity, normal) * normal;
-
-                if(LiteMath.NearlyEqual(relativeVelocity, LiteVector.Zero))
-                {
-                    continue;
-                }
-
-                tangent = tangent.Normalize();
-
-                float raPrepDotT = LiteMath.Dot(raPerp, tangent);
-                float rbPrepDotT = LiteMath.Dot(rbPerp, tangent);
-
-                float denom = (bodyA.InvMass + bodyB.InvMass) +
-                    (raPrepDotT * raPrepDotT) * bodyA.InvInertia +
-                    (rbPrepDotT * rbPrepDotT) * bodyB.InvInertia;
-
-                float jt = -LiteMath.Dot(relativeVelocity, tangent);
-                jt /= denom;
-                jt /= (float)contactCount;
-
-                LiteVector frictionImpulse;
-
-                float j = jlist[i];
-
-                if (MathF.Abs(jt) <= j * sf)
-                {
-                    frictionImpulse = jt * tangent;
-                }
-                else
-                {
-                    frictionImpulse = -j * tangent * df;
-                }
-
-                this.frictionImpulseList[i] = frictionImpulse;
-            }
-
-            for (int i = 0; i < contactCount; i++)
-            {
-                LiteVector frictionImpulse = this.frictionImpulseList[i];
-                LiteVector ra = this.raList[i];
-                LiteVector rb = this.rbList[i];
-
-                bodyA.LinearVelocity += -frictionImpulse * bodyA.InvMass;
-                bodyA.AngularVelocity += -LiteMath.Cross(ra, frictionImpulse) * bodyA.InvInertia;
-                bodyB.LinearVelocity += frictionImpulse * bodyB.InvMass;
-                bodyB.AngularVelocity += LiteMath.Cross(rb, frictionImpulse) * bodyB.InvInertia;
             }
         }
     }
