@@ -130,7 +130,7 @@ namespace Lite.Physics
             }
 
             watch.Restart();
-            this.world.Step(LiteUtil.GetElapsedTimeSeconds(gameTime), 20);
+            this.world.Step(LiteUtil.GetElapsedTimeSeconds(gameTime), 20, CollisionResolveMode.RotationFriction);
             watch.Stop();
 
             this.totalWorldStepTime += this.watch.Elapsed.TotalMilliseconds;

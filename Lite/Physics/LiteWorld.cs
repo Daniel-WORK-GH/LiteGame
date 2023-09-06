@@ -6,6 +6,15 @@ using System.Threading.Tasks;
 
 namespace Lite.Physics
 { 
+    public enum CollisionResolveMode
+    {
+        None = 0,
+        CollisionOnly,
+        Basic,
+        Rotation,
+        RotationFriction,
+    }
+
     public class LiteWorld
     {
         public const float MinBodySize = 0.01f * 0.1f;
@@ -48,6 +57,11 @@ namespace Lite.Physics
             this.jlist = new float[2];
         }
 
+        public void SetGravity(LiteVector gravity)
+        {
+            this.gravity = gravity;
+        }
+
         public void AddBody(LiteBody body)
         {
             this.bodylist.Add(body);
@@ -70,7 +84,7 @@ namespace Lite.Physics
             return true;
         }
 
-        public void Step(float time, int totalIterations)
+        public void Step(float time, int totalIterations, CollisionResolveMode mode = CollisionResolveMode.Basic)
         {
             totalIterations = Math.Clamp(totalIterations, LiteWorld.MinIterations, LiteWorld.MaxIterations);
 
@@ -79,7 +93,7 @@ namespace Lite.Physics
                 this.contactPairs.Clear();
                 this.StepBodies(time, totalIterations);         
                 this.BroadPhase();
-                this.NarrowPhase();
+                this.NarrowPhase(mode);
             }
         }
 
@@ -110,8 +124,10 @@ namespace Lite.Physics
             }
         }
 
-        private void NarrowPhase()
+        private void NarrowPhase(CollisionResolveMode mode)
         {
+            if (mode == CollisionResolveMode.None) return;
+
             for (int i = 0; i < this.contactPairs.Count; i++)
             {
                 (int, int) pair = this.contactPairs[i];
@@ -127,7 +143,19 @@ namespace Lite.Physics
 
                     LiteManifold contact = new LiteManifold(bodyA, bodyB, normal, depth,
                         contact1, contact2, contactCount);
-                    this.ResolveCollisionWithRotationAndFriction(in contact);
+
+                    if(mode == CollisionResolveMode.Basic) 
+                    {
+                        this.ResolveCollisionBasic(in contact);
+                    }
+                    else if(mode == CollisionResolveMode.Rotation)
+                    {
+                        this.ResolveCollisionWithRotation(in contact);
+                    }
+                    else if (mode == CollisionResolveMode.RotationFriction)
+                    {
+                        this.ResolveCollisionWithRotationAndFriction(in contact);
+                    }
                 }
 
             }
