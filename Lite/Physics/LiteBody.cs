@@ -33,6 +33,8 @@ namespace Lite.Physics
         public readonly float Radius;
         public readonly float Width;
         public readonly float Height;
+        public readonly float StaticFriction;
+        public readonly float DynamicFriction;
 
         private readonly LiteVector[] vertices;
         private LiteVector[] transformedVertices;
@@ -86,6 +88,8 @@ namespace Lite.Physics
             this.Radius = radius;
             this.Width = width;
             this.Height = height;
+            this.StaticFriction = 0.6f;
+            this.DynamicFriction = 0.4f;
 
             if (!this.IsStatic)
             {
@@ -119,7 +123,7 @@ namespace Lite.Physics
             {
                 LiteTransform transfrom = new LiteTransform(this.position, this.angle);
 
-                for(int i=  0; i<this.vertices.Length; i++)
+                for(int i=  0; i < this.vertices.Length; i++)
                 {
                     LiteVector v = this.vertices[i];
                     this.transformedVertices[i] = LiteVector.Transform(v, transfrom);
