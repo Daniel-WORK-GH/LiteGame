@@ -92,13 +92,15 @@ namespace Lite.Physics
             {
                 this.contactPairs.Clear();
                 this.StepBodies(time, totalIterations);         
-                this.BroadPhase();
+                this.BroadPhase(mode);
                 this.NarrowPhase(mode);
             }
         }
 
-        private void BroadPhase()
+        private void BroadPhase(CollisionResolveMode mode)
         {
+            if (mode == CollisionResolveMode.None) return;
+
             for (int i = 0; i < this.bodylist.Count; i++)
             {
                 LiteBody bodyA = this.bodylist[i];
